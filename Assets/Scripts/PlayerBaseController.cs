@@ -55,6 +55,9 @@ public class PlayerBaseController : MonoBehaviour
         set => state = value;
     }
 
+    /// <summary>
+    /// WASD 입력값
+    /// </summary>
     private Vector2 moveInput;
     public Vector2 MoveInput
     {
@@ -62,11 +65,41 @@ public class PlayerBaseController : MonoBehaviour
         set => moveInput = value;
     }
 
+    /// <summary>
+    /// forward 벡터와 유사
+    /// </summary>
     private Vector3 moveDirection;
     public Vector3 MoveDirection
     {
         get => moveDirection;
         set => moveDirection = value;
+    }
+
+    private Vector3 moveRelativeDirection;
+    public Vector3 MoveRelativeDirection
+    {
+        get => moveRelativeDirection;
+        set => moveRelativeDirection = value;
+    }
+
+    /// <summary>
+    /// Move Direction * Move Speed
+    /// </summary>
+    private Vector3 moveVelocity;
+    public Vector3 MoveVelocity
+    {
+        get => moveVelocity;
+        set => moveVelocity = value;
+    }
+
+    /// <summary>
+    /// Input * Move Speed
+    /// </summary>
+    private Vector3 moveRelativeVelocity;
+    public Vector3 MoveRelativeVelocity
+    {
+        get => moveRelativeVelocity;
+        set => moveRelativeVelocity = value;
     }
 
     private float rotationAngle;
@@ -96,8 +129,11 @@ public class PlayerBaseController : MonoBehaviour
     {
         moveInput = Vector2.zero;
         moveDirection = transform.forward;
-        rotationAngle = 0f;
+        moveRelativeDirection = transform.forward;
+        moveVelocity = Vector3.zero;
+        moveRelativeVelocity = Vector3.zero;
         moveSpeed = 0f;
+        rotationAngle = 0f;
         IsInCombat = false;
     }
 
@@ -147,13 +183,25 @@ public class PlayerBaseController : MonoBehaviour
 
     private void SetAnimationParameters()
     {
-        animator.SetBool(PlayerAnimationParameter.IsInCombat, isInCombat);
-
         animator.SetFloat(PlayerAnimationParameter.MoveInputX, moveInput.x);
         animator.SetFloat(PlayerAnimationParameter.MoveInputY, moveInput.y);
+
         animator.SetFloat(PlayerAnimationParameter.MoveDirectionX, moveDirection.x);
         animator.SetFloat(PlayerAnimationParameter.MoveDirectionY, moveDirection.z);
-        animator.SetFloat(PlayerAnimationParameter.MoveSpeed, moveSpeed);
+
+        animator.SetFloat(PlayerAnimationParameter.MoveRelativeDirectionX, moveRelativeDirection.x);
+        animator.SetFloat(PlayerAnimationParameter.MoveRelativeDirectionY, moveRelativeDirection.z);
+
+        animator.SetFloat(PlayerAnimationParameter.MoveVelocityX, moveVelocity.x);
+        animator.SetFloat(PlayerAnimationParameter.MoveVelocityY, moveVelocity.z);
+
+        animator.SetFloat(PlayerAnimationParameter.MoveRelativeVelocityX, MoveRelativeVelocity.x);
+        animator.SetFloat(PlayerAnimationParameter.MoveRelativeVelocityY, moveRelativeVelocity.z);
+
         animator.SetFloat(PlayerAnimationParameter.RotationAngle, rotationAngle);
+
+        animator.SetFloat(PlayerAnimationParameter.MoveSpeed, moveSpeed);
+
+        animator.SetBool(PlayerAnimationParameter.IsInCombat, isInCombat);
     }
 }

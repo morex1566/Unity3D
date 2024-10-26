@@ -23,6 +23,8 @@ public abstract class PlayerIdleState : PlayerState
     public override void Update()
     {
         baseController.MoveSpeed = Mathf.Lerp(baseController.MoveSpeed, 0f, Time.deltaTime * 15f);
+        baseController.MoveVelocity = baseController.MoveDirection * baseController.MoveSpeed;
+        baseController.MoveRelativeVelocity = baseController.MoveRelativeDirection * baseController.MoveSpeed;
     }
 
     public override void Dispose()
