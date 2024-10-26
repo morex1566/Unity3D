@@ -1,71 +1,45 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerWalkingState : PlayerState
+public abstract class PlayerWalkingState : PlayerState
 {
-    private InputAction movingAction;
+    protected InputAction targetAction;
 
-    private InputAction runningAction;
-
-    private InputAction drawingAction;
-
-    private InputAction targetingAction;
+    protected InputAction movingAction;
 
 
 
-
-    public PlayerWalkingState(PlayerCharacterController controller) : base(controller)
+    protected PlayerWalkingState(PlayerBaseController baseController) : base(baseController) 
     {
+        targetAction = InputManager.InputMappingContext.Player.Target;
+        targetAction.performed += OnTarget;
+
         movingAction = InputManager.InputMappingContext.Player.Move;
-        runningAction = InputManager.InputMappingContext.Player.Run;
-        drawingAction = InputManager.InputMappingContext.Player.Draw;
-        targetingAction = InputManager.InputMappingContext.Player.Target;
+        movingAction.performed += OnMovePerformed;
+        movingAction.performed += OnRotatePerformed;
+        movingAction.canceled += OnMoveCanceled;
+        movingAction.canceled += OnRotateCanceled;
     }
 
-    public override void FixedUpdate()
+    public override void Dispose()
     {
-        Move();
-        Rotate();
-        Rotate(controller.CameraController.transform.forward);
+        targetAction.performed -= OnTarget;
+        movingAction.performed -= OnMovePerformed;
+        movingAction.performed -= OnRotatePerformed;
+        movingAction.canceled -= OnMoveCanceled;
+        movingAction.canceled -= OnRotateCanceled;
     }
 
-    public override void Update()
-    {
-        if (movingAction.IsPressed() == false)
-        {
-            controller.State = new PlayerIdleState(controller);
-        }
+    protected virtual void OnTarget(InputAction.CallbackContext context) { }
 
-        /// TODO: must be later than <see cref="movingAction"/>
-        if (runningAction.IsPressed() == true)
-        {
-            PlayerRunningState runningState = new PlayerRunningState(controller);
-            controller.State = runningState;
-            controller.CameraController.LerpFOV(runningState.CameraFOVAtRunningState);
-        }
+    protected virtual void OnMovePerformed(InputAction.CallbackContext context) { }
 
-        if (drawingAction.triggered == true)
-        {
-            controller.IsWeaponDrawn = controller.IsWeaponDrawn ? false : true;
-            controller.OnWeaponDraw = true;
-        }
+    protected virtual void OnMoveCanceled(InputAction.CallbackContext context) { }
 
-        if (targetingAction.triggered == true)
-        {
-            controller.IsInCombat = controller.IsInCombat ? false : true;
-        }
+    protected virtual void OnRotatePerformed(InputAction.CallbackContext context) { }
 
-        SetMovement();
-        SetAnimParameters();
-    }
+    protected virtual void OnRotateCanceled(InputAction.CallbackContext context) { }
 
-    protected override void SetMovement()
-    {
-        Vector2 inputDirection2D = movingAction.ReadValue<Vector2>();
-        Vector3 inputDirection3D = new Vector3(inputDirection2D.x, 0f, inputDirection2D.y);
-
-        controller.InputDirection = inputDirection2D;
-        controller.MoveDistance = Mathf.Abs(Mathf.Lerp(controller.MoveDistance, controller.Data.NonCombatWalkingSpeed, Time.deltaTime * controller.Status.InteriaFromIdleToWalking));
-        controller.MoveDirection = Vector3.Slerp(controller.MoveDirection, inputDirection3D, Time.deltaTime * controller.Status.InteriaFromIdleToWalking);
-    }
 }

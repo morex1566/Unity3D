@@ -5,11 +5,10 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class InputManager : MonoBehaviourSingleton<InputManager>
 {
-    private static PlayerInputMappingContext inputMappingContext;
-    public static PlayerInputMappingContext InputMappingContext
+    private static InputMappingContext inputMappingContext;
+    public static InputMappingContext InputMappingContext
     {
         get => inputMappingContext;
-        set => inputMappingContext = value;
     }
 
 
@@ -21,7 +20,7 @@ public class InputManager : MonoBehaviourSingleton<InputManager>
 
     private void Awake()
     {
-        inputMappingContext = new PlayerInputMappingContext();
+        inputMappingContext = new InputMappingContext();
     }
 
     private void OnEnable()

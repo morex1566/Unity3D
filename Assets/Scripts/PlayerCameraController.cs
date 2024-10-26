@@ -1,247 +1,143 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 [RequireComponent(typeof(Camera))]
 public class PlayerCameraController : MonoBehaviour
 {
-    [SerializeField] private GameObject target;
-    public GameObject Target
-    {
-        get { return target; }
-        set { target = value; }
-    }
-
     [SerializeField] private Camera cam;
     public Camera Cam
     {
-        get { return cam; }
-        set { cam = value; }
+        get => cam;
     }
 
-    private GameObject cameraArm;
-
-    private InputAction looking;
-
-    private InputAction moving;
-
-    private Vector3 cameraArmPos;
-    public Vector3 CameraArmPos
+    [SerializeField] private Vector3 nonCombatCamArmPivot;
+    public Vector3 NonCombatCamArmPivot
     {
-        get { return cameraArmPos; }
+        get => nonCombatCamArmPivot;
+        set => nonCombatCamArmPivot = value;
     }
 
-    private Vector3 nonCombatCameraArmPivotPos;
-    public Vector3 NonCombatCameraArmPivotPos
+    [SerializeField] private Vector3 combatCamArmPivot;
+    public Vector3 CombatCamArmPivot
     {
-        get { return nonCombatCameraArmPivotPos; }
+        get => combatCamArmPivot;
+        set => combatCamArmPivot = value;
     }
 
-    private Vector3 combatCameraArmPivotPos;
-    public Vector3 CombatCameraArmPivotPos
+    [SerializeField] private float distance2CamArm;
+    public float Distance2CamArm
     {
-        get { return combatCameraArmPivotPos; }
+        get => distance2CamArm;
+        set => distance2CamArm = value;
     }
 
-    // distance from pivot to cam at non-combat state
-    private float nonCombatCameraDist;
-    public float NonCombatCameraDist
+    [SerializeField] private GameObject playerInstance;
+    public GameObject PlayerInstance
     {
-        get { return nonCombatCameraDist; }
-        set { nonCombatCameraDist = value; }
+        get => playerInstance;
+        set => playerInstance = value;
     }
 
-    // distance from pivot to cam at combat state
-    private float combatCameraDist;
-    public float CombatCameraDist
+    private PlayerBaseController baseController;
+    public PlayerBaseController BaseController
     {
-        get { return combatCameraDist; }
-        set { combatCameraDist = value; }
+        get => baseController;
+        set => baseController = value;
     }
 
-    // default camera fov
-    private float cameraFOV;
-    public float CameraFOV
+    private GameObject camArmInstance;
+    public GameObject CamArmInstance
     {
-        get { return cameraFOV; }
-        set 
-        { 
-            cameraFOV = value;
-            cam.fieldOfView = value;
-        }
+        get => camArmInstance;
     }
 
-    // camera fov lerp weight
-    private float cameraFOVLerpInteria;
-    public float CameraFOVLerpInteria
-    {
-        get { return cameraFOVLerpInteria; }
-        set { cameraFOVLerpInteria = value; }
-    }
+    private InputAction lookingAction;
 
-    // rotation clamp
+    private Vector2 lookDelta;
+
     private float minRotationX;
+
     private float maxRotationX;
-
-    // mouse input for using tps imple
-    private Vector2 cameraLookingDelta;
-    public Vector2 CameraLookingDelta
-    {
-        get { return cameraLookingDelta; }
-    }
-
-    // keyboard input for using tps imple
-    private Vector3 cameraMovingDelta;
-    public Vector3 CameraMovingDelta
-    {
-        get { return cameraMovingDelta; }
-    }
-
-    // is camera fov lerping?
-    private Coroutine lerpingFOV;
-
-    // is camera pivot pos lerping?
-    private Coroutine lerpingPivotPos;
 
 
 
     private void Awake()
     {
-        looking = InputManager.InputMappingContext.Player.Look;
-        moving = InputManager.InputMappingContext.Player.Move;
-
-        cameraArmPos = Vector3.zero;
-
-        nonCombatCameraArmPivotPos = new Vector3(0.5f, 2f, 0);
-        nonCombatCameraDist = 3f;
-        cameraFOV = 63f;
-        cameraFOVLerpInteria = 5f;
-
+        lookingAction = InputManager.InputMappingContext.Player.Look;
+        lookDelta = Vector2.zero;
         minRotationX = -60f;
         maxRotationX = 60f;
     }
 
     private void Start()
     {
-        cam.fieldOfView = cameraFOV;
+        // 카메라 암에 카메라 설치
+        camArmInstance = new GameObject("Player Camera Arm");
+        camArmInstance.transform.Translate(playerInstance.transform.position + nonCombatCamArmPivot, Space.World);
 
-        // attach to target
-        cameraArm = new GameObject("Player Camera Arm");
-        transform.SetParent(cameraArm.transform);
-        MoveCameraArm();
-        MoveCamera();
+        transform.position = camArmInstance.transform.position;
+        transform.SetParent(camArmInstance.transform);
+        transform.Translate(new Vector3(0, 0, -distance2CamArm), Space.World);
+        cam.depth = float.MaxValue;
+
+        lookingAction.performed += OnLook;
+        lookingAction.canceled += OnLook;
+    }
+
+    private void FixedUpdate()
+    {
+        MoveCamArm();
     }
 
     private void Update()
     {
-        cameraLookingDelta = looking.ReadValue<Vector2>();   
+
     }
 
     private void LateUpdate()
     {
-        MoveCameraArm();
-        RotateCameraArm();
-        RotateCamera();
+        RotateCamArm();
+        RotateCam();
     }
 
-
-
-    // using...
-    // 1. when combat-state to non-combat-state
-    // 2. when cam rotate around character, cam must be center to character
-    public void LerpPivotPos(Vector3 newPivotPos)
+    private void MoveCamArm()
     {
+        // 화면이 회전할 때 피봇도 같은 방향으로 회전
+        Vector3 nextPos = nonCombatCamArmPivot;
+        Quaternion rotationY = Quaternion.Euler(new Vector3(0f, camArmInstance.transform.rotation.eulerAngles.y, 0f));
+        nextPos = rotationY * nextPos;
+        nextPos += playerInstance.transform.position;
 
+        camArmInstance.transform.position = Vector3.Lerp(camArmInstance.transform.position, nextPos, Time.deltaTime * 5f);
     }
 
-    // using...
-    // 1. when character running
-    public void LerpFOV(float fov)
+    private void RotateCamArm()
     {
-        if (lerpingFOV != null)
+        // 마우스에 따른 카메라 회전
+        camArmInstance.transform.Rotate(Vector3.up, lookDelta.x * 0.15f, Space.World);
+        camArmInstance.transform.Rotate(Vector3.left, lookDelta.y * 0.15f, Space.World);
+
+        // 카메라 회전하는데 위 아래 한도 설정 구현
+        Vector3 camArmRotation = camArmInstance.transform.rotation.eulerAngles;
+        if (camArmRotation.x > 180f)
         {
-            StopCoroutine(lerpingFOV);
+            camArmRotation.x -= 360f;
         }
 
-        lerpingFOV = StartCoroutine(LerpFOVCoroutine(fov));
+        float clampedCamArmRotationX = Mathf.Clamp(camArmRotation.x, minRotationX, maxRotationX);
+        Vector3 clampedCamArmRotation = new Vector3(clampedCamArmRotationX, camArmRotation.y, camArmRotation.z);
+        camArmInstance.transform.rotation = Quaternion.Euler(clampedCamArmRotation);
     }
 
-
-
-    private void MoveCameraArm()
+    private void RotateCam()
     {
-        cameraArmPos = target.transform.position + nonCombatCameraArmPivotPos;
-
-        cameraArm.transform.position = cameraArmPos;
+        transform.LookAt(camArmInstance.transform);
     }
 
-    private void MoveCamera()
+    private void OnLook(InputAction.CallbackContext context)
     {
-        Vector3 cameraPos = cameraArmPos + new Vector3(0, 0, -nonCombatCameraDist);
-
-        transform.position = cameraPos;
+        lookDelta = context.ReadValue<Vector2>();
     }
-
-    private void RotateCameraArm()
-    {
-        cameraArm.transform.Rotate(Vector3.up, cameraLookingDelta.x * 0.2f, Space.World);
-
-        cameraArm.transform.Rotate(Vector3.left, cameraLookingDelta.y * 0.15f, Space.World);
-
-        // clamp x rotation to limit camera go up
-        Vector3 cameraArmRotation = cameraArm.transform.rotation.eulerAngles;
-        if (cameraArmRotation.x > 180f)
-        {
-            cameraArmRotation.x -= 360f;
-        }
-        float clampedCameraArmRotationX = Mathf.Clamp(cameraArmRotation.x, minRotationX, maxRotationX);
-        Vector3 clampedCameraArmRotation = new Vector3(clampedCameraArmRotationX, cameraArmRotation.y, cameraArmRotation.z);
-        cameraArm.transform.rotation = Quaternion.Euler(clampedCameraArmRotation);
-    }
-
-    private void RotateCamera()
-    {
-        transform.LookAt(cameraArm.transform);
-    }
-
-    private IEnumerator LerpPivotPosCoroutine(Vector3 newPivotPos)
-    {
-        yield return null;
-    }
-
-    private IEnumerator LerpFOVCoroutine(float fov)
-    {
-        while (Mathf.Approximately(fov, cam.fieldOfView) == false)
-        {
-            cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, fov, Time.deltaTime * CameraFOVLerpInteria);
-            yield return null;
-        }
-
-        lerpingFOV = null;
-    }
-
-
-#if UNITY_EDITOR
-    private void OnDrawGizmos()
-    {
-        if (Application.isPlaying == false)
-        {
-            return;
-        }
-
-        // camera arm pivot
-        Gizmos.color = Color.red;
-        Gizmos.DrawSphere(CameraArmPos, 0.1f);
-        Handles.Label(CameraArmPos, "camera_arm_pivot_pos");
-
-        // camera distance to camera arm pivot
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(transform.position, cameraArmPos);
-        Handles.Label((cameraArmPos + transform.position) * 0.5f, "camera_distance_to_pivot");
-    }
-#endif
 }

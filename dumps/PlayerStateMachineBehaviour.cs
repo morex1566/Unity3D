@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class PlayerStateMachineBehaviour : StateMachineBehaviour
 {
-    protected PlayerCharacterController controller;
+    protected PlayerBaseController controller;
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        controller = animator.gameObject.GetComponentInParent<PlayerCharacterController>();
+        controller = animator.gameObject.GetComponentInParent<PlayerBaseController>();
     }
 }

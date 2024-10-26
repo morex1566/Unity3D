@@ -91,7 +91,7 @@ public partial class @PlayerInputMappingContext: IInputActionCollection2, IDispo
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Target"",
+                    ""name"": ""baseController"",
                     ""type"": ""Button"",
                     ""id"": ""57d16e85-1f9e-4b07-be99-878ffa9b2f6b"",
                     ""expectedControlType"": ""Button"",
@@ -291,7 +291,7 @@ public partial class @PlayerInputMappingContext: IInputActionCollection2, IDispo
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Target"",
+                    ""action"": ""baseController"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -908,7 +908,7 @@ public partial class @PlayerInputMappingContext: IInputActionCollection2, IDispo
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
         m_Player_Run = m_Player.FindAction("Run", throwIfNotFound: true);
         m_Player_Draw = m_Player.FindAction("Draw", throwIfNotFound: true);
-        m_Player_Target = m_Player.FindAction("Target", throwIfNotFound: true);
+        m_Player_Target = m_Player.FindAction("baseController", throwIfNotFound: true);
         m_Player_Block = m_Player.FindAction("Block", throwIfNotFound: true);
         m_Player_TurnHead = m_Player.FindAction("Turn Head", throwIfNotFound: true);
         // UI

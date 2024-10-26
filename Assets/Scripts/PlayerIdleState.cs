@@ -1,59 +1,37 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerIdleState : PlayerState
+public abstract class PlayerIdleState : PlayerState
 {
-    private InputAction movingAction;
+    protected InputAction targetAction;
 
-    private InputAction drawingAction;
-
-    private InputAction targetingAction;
+    protected InputAction movingAction;
 
 
 
-    public PlayerIdleState(PlayerCharacterController controller) : base(controller)
+    protected PlayerIdleState(PlayerBaseController baseController) : base(baseController)
     {
+        targetAction = InputManager.InputMappingContext.Player.Target;
+        targetAction.performed += OnTarget;
+
         movingAction = InputManager.InputMappingContext.Player.Move;
-        drawingAction = InputManager.InputMappingContext.Player.Draw;
-        targetingAction = InputManager.InputMappingContext.Player.Target;
-    }
-
-    public override void FixedUpdate()
-    {
-        Move();
-        Rotate();
+        movingAction.performed += OnMove;
     }
 
     public override void Update()
     {
-        if (movingAction.inProgress == true)
-        {
-            controller.State = new PlayerWalkingState(controller);
-        }
-
-        if (drawingAction.triggered == true)
-        {
-            controller.IsWeaponDrawn = controller.IsWeaponDrawn ? false : true;
-            controller.OnWeaponDraw = true;
-        }
-
-        if (targetingAction.triggered == true)
-        {
-            controller.IsInCombat = controller.IsInCombat ? false : true;
-        }
-
-
-        SetMovement();
-        SetAnimParameters();
+        baseController.MoveSpeed = Mathf.Lerp(baseController.MoveSpeed, 0f, Time.deltaTime * 15f);
     }
 
-    protected override void SetMovement()
+    public override void Dispose()
     {
-        Vector2 inputDirection2D = movingAction.ReadValue<Vector2>();
-        Vector3 inputDirection3D = new Vector3(inputDirection2D.x, 0f, inputDirection2D.y);
-
-        controller.InputDirection = inputDirection2D;
-        controller.MoveDistance = Mathf.Abs(Mathf.Lerp(controller.MoveDistance, 0f, Time.deltaTime * controller.Status.InteriaFromIdleToWalking));
-        controller.MoveDirection = Vector3.Slerp(controller.MoveDirection, inputDirection3D, Time.deltaTime * controller.Status.InteriaFromIdleToWalking);
+        targetAction.performed -= OnTarget;
+        movingAction.performed -= OnMove;
     }
+
+    protected virtual void OnTarget(InputAction.CallbackContext context) { }
+
+    protected virtual void OnMove(InputAction.CallbackContext context) { }
 }

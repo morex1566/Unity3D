@@ -10,10 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 43a1a055cc23cf444aef8dd149df6812, type: 3}
-  m_Name: PlayerData
+  m_Name: c1020
   m_EditorClassIdentifier: 
   CombatWalkingSpeed: 1.25
   NonCombatWalkingSpeed: 1.25
-  RunningSpeed: 3.5
-  InteriaFromIdleToWalking: 30
-  InteriaFromWalkingToRunning: 10
+  RunningSpeed: 5

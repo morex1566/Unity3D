@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class PlayerCharacterController : MonoBehaviour
+public class PlayerBaseController : MonoBehaviour
 {
     [SerializeField] private PlayerCameraController cameraController;
     public PlayerCameraController CameraController
@@ -10,11 +10,11 @@ public class PlayerCharacterController : MonoBehaviour
         set { cameraController = value; }
     }
 
-    [SerializeField] private CharacterController character;
-    public CharacterController Character
+    [SerializeField] private CharacterController characterController;
+    public CharacterController CharacterController
     {
-        get { return character; }
-        set { character = value; }
+        get { return characterController; }
+        set { characterController = value; }
     }
 
     [SerializeField] private Animator animator;
@@ -100,7 +100,7 @@ public class PlayerCharacterController : MonoBehaviour
     {
         // instance
         status = Instantiate(data);
-        state = new PlayerIdleState(this);
+        state = new PlayerNonCombatIdleState(this);
 
         // constant value
         inputDirection = Vector2.zero;
@@ -130,6 +130,8 @@ public class PlayerCharacterController : MonoBehaviour
     {
         ResetTriggers();
     }
+
+
 
     private void ResetTriggers()
     {

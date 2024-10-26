@@ -1,5 +1,5 @@
 {
-    "name": "PlayerInputMappingContext",
+    "name": "InputMappingContext",
     "maps": [
         {
             "name": "Player",
